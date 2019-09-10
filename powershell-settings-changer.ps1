@@ -24,6 +24,10 @@ Set-ItemProperty $key LaunchTo 1              # Launch to 'This PC'
 Set-ItemProperty $key HideDrivesWithNoMedia 0 # do not hide drives, which are not present
 Set-ItemProperty $key SeparateProcess 1       # start each explorer.exe in its own process
 
+Write-Host -ForegroundColor Cyan "Updating: Applying Dark Mode..."
+$key = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize'
+Set-ItemProperty $key AppsUseLightTheme 0     # Apply Dark Theme
+
 
 Write-Host ""
 Write-Host -ForegroundColor Cyan "Restarting Explorer Process, for changes to take effect..."
