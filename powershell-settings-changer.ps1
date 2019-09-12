@@ -51,27 +51,33 @@ $key = 'HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\Windows Search'
 Set-ItemProperty $key AllowCortana 0            # disable cortana
 
 
-$scheduletask=""
-while ($scheduletask -ne "y" -and $scheduletask -ne "n") {
-    Write-Host -NoNewline -ForegroundColor Cyan "Do you want to add a scheduled task to keep Windows from Rebooting on its own? (y|n): "
-    $scheduletask = Read-Host
-}
+$scheduletaskname = "No Self Reboot"
+$scheduledtaskexists = Get-ScheduledTask | Where-Object {$_.TaskName -like $scheduletaskname }
+if ($scheduledtaskexists) {
+    Write-Host -ForegroundColor Green "'No Self Reboot' Scheduled Task detected, not registering again"
+} else {
+    $scheduletask=""
+    while ($scheduletask -ne "y" -and $scheduletask -ne "n") {
+        Write-Host -NoNewline -ForegroundColor Cyan "Do you want to add a scheduled task to keep Windows from Rebooting on its own? (y|n): "
+        $scheduletask = Read-Host
+    }
 
-if ($scheduletask -eq "y") {
-    Write-Host -ForegroundColor Green "Adding Scheduled Task..."
+    if ($scheduletask -eq "y") {
+        Write-Host -ForegroundColor Green "Adding Scheduled Task..."
 
-    $scheduleaction = New-ScheduledTaskAction -Execute schtasks -Argument "/change /tn \Microsoft\Windows\UpdateOrchestrator\Reboot /DISABLE"  # disable reboot task in task-scheduler
-    $scheduleprincipal = New-ScheduledTaskPrincipal -UserID "NT AUTHORITY\SYSTEM" -LogonType ServiceAccount -RunLevel Highest                  # execute with highest system privilges
-    $scheduletsettings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Hours 1)
-    $scheduletask = New-ScheduledTask -Action $scheduleaction -Principal $scheduleprincipal -Trigger $scheduletrigger1 -Settings $scheduletsettings
+        $scheduleaction = New-ScheduledTaskAction -Execute schtasks -Argument "/change /tn \Microsoft\Windows\UpdateOrchestrator\Reboot /DISABLE"  # disable reboot task in task-scheduler
+        $scheduleprincipal = New-ScheduledTaskPrincipal -UserID "NT AUTHORITY\SYSTEM" -LogonType ServiceAccount -RunLevel Highest                  # execute with highest system privilges
+        $scheduletsettings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Hours 1)
 
-    $scheduletrigger1 = New-ScheduledTaskTrigger -At 4:30AM -Daily
-    $scheduletrigger2 = New-ScheduledTaskTrigger -At 4:30AM -Once -RepetitionInterval (New-TimeSpan -Minutes 10) -RepetitionDuration (New-TimeSpan -Days 1)
-    $scheduletrigger1.Repetition = $scheduletrigger2.Repetition                                              # stupid workaround so that the trigger reads: "At 4:30 every day - After triggered, repeat every 10 minutes for a duration of 1 day"
+        $scheduletrigger1 = New-ScheduledTaskTrigger -At 4:30AM -Daily
+        $scheduletrigger2 = New-ScheduledTaskTrigger -At 4:30AM -Once -RepetitionInterval (New-TimeSpan -Minutes 10) -RepetitionDuration (New-TimeSpan -Days 1)
+        $scheduletrigger1.Repetition = $scheduletrigger2.Repetition                                              # stupid workaround so that the trigger reads: "At 4:30 every day - After triggered, repeat every 10 minutes for a duration of 1 day"
 
-    $scheduledtask = Register-ScheduledTask -TaskName "dont self restart" -InputObject $scheduletask -Force  # register task
-} elseif ($scheduletask -eq "n") {
-    Write-Host -ForegroundColor Red "Not Adding Scheduled Task"
+        $scheduletask = New-ScheduledTask -Action $scheduleaction -Principal $scheduleprincipal -Trigger $scheduletrigger1 -Settings $scheduletsettings
+        $scheduledtask = Register-ScheduledTask -TaskName $scheduletaskname -InputObject $scheduletask -Force  # register task
+    } elseif ($scheduletask -eq "n") {
+        Write-Host -ForegroundColor Red "Not Adding Scheduled Task"
+    }
 }
 
 
