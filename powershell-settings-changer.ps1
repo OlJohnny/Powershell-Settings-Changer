@@ -8,6 +8,7 @@ Write-Host -ForegroundColor Cyan "Welcome to Powershell-Settings-Changer."
 Write-Host ""
 
 
+# change registry entries
 Write-Host -ForegroundColor Cyan "Updating Basic Explorer Settings..."
 $key = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer'
 Set-ItemProperty $key ShowFrequent 0            # do not show frequently used files
@@ -51,6 +52,25 @@ $key = 'HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\Windows Search'
 Set-ItemProperty $key AllowCortana 0            # disable cortana
 
 
+Write-Host -ForegroundColor Cyan "Updating: Disabling Accessibility Features..."
+$key = 'HKCU:\Control Panel\Accessibility\On'
+Set-ItemProperty $key On 0						# disable general accessibility features
+$key = 'HKCU:\Control Panel\Accessibility\Blind Access'
+Set-ItemProperty $key On 0						# disable blind access
+$key = 'HKCU:\Control Panel\Accessibility\Keyboard Preference'
+Set-ItemProperty $key On 0						# disable keyboard preference
+$key = 'HKCU:\Control Panel\Accessibility\AudioDescription'
+Set-ItemProperty $key On 0						# disable audio description
+$key = 'HKCU:\Control Panel\Accessibility\ShowSounds'
+Set-ItemProperty $key On 0						# disable sound visualization
+$key = 'HKCU:\Control Panel\Accessibility\StickyKeys'
+Set-ItemProperty $key Flags 2					# disable sticky keys
+$key = 'HKCU:\Control Panel\Accessibility\ToggleKeys'
+Set-ItemProperty $key Flags 34					# disable sticky keys
+
+
+# add scheduled task to periodically disable self reboots
+Write-Host ""
 $scheduletaskname = "No Self Reboot"
 $scheduledtaskexists = Get-ScheduledTask | Where-Object {$_.TaskName -like $scheduletaskname }
 if ($scheduledtaskexists) {
@@ -71,7 +91,7 @@ if ($scheduledtaskexists) {
 
         $scheduletrigger1 = New-ScheduledTaskTrigger -At 4:30AM -Daily
         $scheduletrigger2 = New-ScheduledTaskTrigger -At 4:30AM -Once -RepetitionInterval (New-TimeSpan -Minutes 10) -RepetitionDuration (New-TimeSpan -Days 1)
-        $scheduletrigger1.Repetition = $scheduletrigger2.Repetition                                              # stupid workaround so that the trigger reads: "At 4:30 every day - After triggered, repeat every 10 minutes for a duration of 1 day"
+        $scheduletrigger1.Repetition = $scheduletrigger2.Repetition                                              # hacky workaround so that the trigger reads: "At 4:30 every day - After triggered, repeat every 10 minutes for a duration of 1 day"
 
         $scheduletask = New-ScheduledTask -Action $scheduleaction -Principal $scheduleprincipal -Trigger $scheduletrigger1 -Settings $scheduletsettings
         $scheduledtask = Register-ScheduledTask -TaskName $scheduletaskname -InputObject $scheduletask -Force  # register task
@@ -81,11 +101,11 @@ if ($scheduledtaskexists) {
 }
 
 
+# restart the explorer task
 Write-Host ""
 Write-Host -ForegroundColor Cyan "Restarting Explorer Process, for changes to take effect..."
 Write-Host -ForegroundColor Gray "For a precise changelog, view the commented code"
 Stop-Process -processname explorer
-
 
 Write-Host ""
 Write-Host -ForegroundColor Cyan "Exiting..."
