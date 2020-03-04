@@ -8,6 +8,28 @@ Write-Host -ForegroundColor Cyan "Welcome to Powershell-Settings-Changer."
 Write-Host ""
 
 
+# backup to-be-modified registry parts
+reg export HKCU "reg_HKCU - $(Get-Date -Format yyyy.MM.dd-HH.mm.ss).reg"
+reg export "HKLM:\SYSTEM\CurrentcontrolSet\Control\SecurityProviders\SCHANNEL" "reg_HKLM-SCHANNEL - $(Get-Date -Format yyyy.MM.dd-HH.mm.ss).reg"
+reg export "HKLM:\SOFTWARE" "reg_HKLM-SOFTWARE - $(Get-Date -Format yyyy.MM.dd-HH.mm.ss).reg"
+
+
+
+# write a path to the registry and create parent-path, if not present
+function write_registry($key_path, $item_name, $item_value){
+	# Test if the key path already exists
+	if (Test-Path $key_path) {
+		Write-Verbose 'Key already exists' -Verbose
+	} else {
+		# If not create new key
+		New-Item -Path $key_path -Force
+	}
+	# Set Key Property
+	New-ItemProperty -Path $key_path -PropertyType "DWord" -Name $item_name -Value $item_value
+}
+
+
+
 # change registry entries
 Write-Host -ForegroundColor Cyan "Updating Basic Explorer Settings..."
 $key = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer'
@@ -52,21 +74,45 @@ $key = 'HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\Windows Search'
 Set-ItemProperty $key AllowCortana 0            # disable cortana
 
 
-Write-Host -ForegroundColor Cyan "Updating: Disabling Accessibility Features..."
-$key = 'HKCU:\Control Panel\Accessibility\On'
-Set-ItemProperty $key On 0						# disable general accessibility features
-$key = 'HKCU:\Control Panel\Accessibility\Blind Access'
-Set-ItemProperty $key On 0						# disable blind access
-$key = 'HKCU:\Control Panel\Accessibility\Keyboard Preference'
-Set-ItemProperty $key On 0						# disable keyboard preference
-$key = 'HKCU:\Control Panel\Accessibility\AudioDescription'
-Set-ItemProperty $key On 0						# disable audio description
-$key = 'HKCU:\Control Panel\Accessibility\ShowSounds'
-Set-ItemProperty $key On 0						# disable sound visualization
-$key = 'HKCU:\Control Panel\Accessibility\StickyKeys'
-Set-ItemProperty $key Flags 2					# disable sticky keys
-$key = 'HKCU:\Control Panel\Accessibility\ToggleKeys'
-Set-ItemProperty $key Flags 34					# disable sticky keys
+Write-Host ""
+Write-Host -ForegroundColor Cyan "Disabling Accessibility Features..."
+write_registry "HKCU:\Control Panel\Accessibility\On" "On" 0					# disable general accessibility features
+write_registry "HKCU:\Control Panel\Accessibility\Blind Access" "On" 0			# disable blind access
+write_registry "HKCU:\Control Panel\Accessibility\Keyboard Preference" "On" 0	# disable keyboard preference
+write_registry "HKCU:\Control Panel\Accessibility\AudioDescription" "On" 0		# disable audio description
+write_registry "HKCU:\Control Panel\Accessibility\ShowSounds" "On" 0			# disable sound visualization
+write_registry "HKCU:\Control Panel\Accessibility\StickyKeys" "On" 0			# disable sticky keys - part 1
+write_registry "HKCU:\Control Panel\Accessibility\ToggleKeys" "On" 0			# disable sticky keys - part 2
+
+
+Write-Host ""
+Write-Host -ForegroundColor Cyan "Disabling SSLv2, SSLv3, TLSv1.0, TLSv1.1 and enabling TLSv1.2 server-side..."
+write_registry "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\SSL 2.0\Server" "DisabledByDefault" 1	# disable SSLv2   Server Side
+write_registry "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\SSL 3.0\Server" "DisabledByDefault" 1	# disable SSLv3   Server Side
+write_registry "HKLM:\SYSTEM\CurrentcontrolSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.0\Server" "DisabledByDefault" 1	# disable TLSv1.0 Server Side - part 1
+write_registry "HKLM:\SYSTEM\CurrentcontrolSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.0\Server" "Enabled" 0				# disable TLSv1.0 Server Side - part 2
+write_registry "HKLM:\SYSTEM\CurrentcontrolSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.1\Server" "DisabledByDefault" 1	# disable TLSv1.1 Server Side - part 1
+write_registry "HKLM:\SYSTEM\CurrentcontrolSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.1\Server" "Enabled" 0				# disable TLSv1.1 Server Side - part 2
+write_registry "HKLM:\SYSTEM\CurrentcontrolSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server" "DisabledByDefault" 0	# enable  TLSv1.2 Server Side - part 1
+write_registry "HKLM:\SYSTEM\CurrentcontrolSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server" "Enabled" 1				# enable  TLSv1.2 Server Side - part 2
+
+
+Write-Host ""
+Write-Host -ForegroundColor Cyan "Disabling RC4 ciphers..."
+# workaround for '/' in key name
+$custom_key = (get-item HKLM:\).OpenSubKey("SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Ciphers", $true)
+$custom_key.CreateSubKey('RC4 40/128')
+$custom_key.CreateSubKey('RC4 56/128')
+$custom_key.CreateSubKey('RC4 128/128')
+$custom_key.Close()
+# set values for created keys
+$key = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Ciphers\RC4 128/128'
+Set-ItemProperty $key Enabled 0					# disable RC4 128bit
+$key = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Ciphers\RC4 56/128'
+Set-ItemProperty $key Enabled 0					# disable RC4 56bit
+$key = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Ciphers\RC4 40/128'
+Set-ItemProperty $key Enabled 0					# disable RC4 40bit
+
 
 
 # add scheduled task to periodically disable self reboots
