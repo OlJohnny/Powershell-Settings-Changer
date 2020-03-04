@@ -1,7 +1,7 @@
 #Requires -RunAsAdministrator
 Set-StrictMode -Version Latest
 
-# github.com/OlJohnny | 2019
+# github.com/OlJohnny | 2020
 
 
 Write-Host -ForegroundColor Cyan "Welcome to Powershell-Settings-Changer."
@@ -31,40 +31,46 @@ function write_registry($key_path, $item_name, $item_value){
 
 
 # change registry entries
+Write-Host ""
 Write-Host -ForegroundColor Cyan "Updating Basic Explorer Settings..."
 $key = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer'
 Set-ItemProperty $key ShowFrequent 0            # do not show frequently used files
 Set-ItemProperty $key ShowRecent 0              # do not show recently used files
 
 
+Write-Host ""
 Write-Host -ForegroundColor Cyan "Updating Advanced Explorer Settings..."
 $key = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
-Set-ItemProperty $key Hidden 1                  # show hidden filex
-Set-ItemProperty $key HideFileExt 0             # show all filex extensions
+Set-ItemProperty $key Hidden 1                  # show hidden files
+Set-ItemProperty $key HideFileExt 0             # show all file extensions
 Set-ItemProperty $key ShowSuperHidden 0         # do not show windows system files
-Set-ItemProperty $key LaunchTo 1                # Launch to 'This PC'
+Set-ItemProperty $key LaunchTo 1                # launch to 'This PC'
 Set-ItemProperty $key HideDrivesWithNoMedia 0   # do not hide drives, which are not present
 Set-ItemProperty $key SeparateProcess 1         # start each explorer.exe in its own process
 Set-ItemProperty $key DontUsePowerShellOnWinX 0 # show powershell instead of cmd on win+x or right-click on windows logo
 
 
+Write-Host ""
 Write-Host -ForegroundColor Cyan "Updating Advanced People Explorer Settings..."
 $key = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\People'
 Set-ItemProperty $key PeopleBand 0              # hide 'contacts' region at end of taskbar
 
 
+Write-Host ""
 Write-Host -ForegroundColor Cyan "Updating Search Settings..."
 $key = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Search'
 Set-ItemProperty $key BingSearchEnabled 0       # disable bing search results
 Set-ItemProperty $key SearchboxTaskbarMode 0    # show the search symbol (not the bar) on taskbar
 
 
-Write-Host -ForegroundColor Cyan "Updating: Applying Dark Mode..."
+Write-Host ""
+Write-Host -ForegroundColor Cyan "Applying Dark Mode..."
 $key = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize'
-Set-ItemProperty $key AppsUseLightTheme 0       # Apply Dark Theme
+Set-ItemProperty $key AppsUseLightTheme 0       # apply dark theme
 
 
-Write-Host -ForegroundColor Cyan "Updating: Disabling Cortana..."
+Write-Host ""
+Write-Host -ForegroundColor Cyan "Disabling Cortana..."
 $key = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search'
 Set-ItemProperty $key AllowCortana 0            # disable cortana in 1803
 Set-ItemProperty $key CortanaConsent 0          # turn off consent for cortana
@@ -120,38 +126,39 @@ Write-Host ""
 $scheduletaskname = "No Self Reboot"
 $scheduledtaskexists = Get-ScheduledTask | Where-Object {$_.TaskName -like $scheduletaskname }
 if ($scheduledtaskexists) {
-    Write-Host -ForegroundColor Green "'No Self Reboot' Scheduled Task detected, not registering again"
+	Write-Host -ForegroundColor Green "'No Self Reboot' Scheduled Task detected, not registering again"
 } else {
-    $scheduletask=""
-    while ($scheduletask -ne "y" -and $scheduletask -ne "n") {
-        Write-Host -NoNewline -ForegroundColor Cyan "Do you want to add a scheduled task to keep Windows from Rebooting on its own? (y|n): "
-        $scheduletask = Read-Host
-    }
+	$scheduletask=""
+	while ($scheduletask -ne "y" -and $scheduletask -ne "n") {
+		Write-Host -NoNewline -ForegroundColor Cyan "Do you want to add a scheduled task to keep Windows from Rebooting on its own? (y|n): "
+		$scheduletask = Read-Host
+	}
 
-    if ($scheduletask -eq "y") {
-        Write-Host -ForegroundColor Green "Adding Scheduled Task..."
+	if ($scheduletask -eq "y") {
+		Write-Host -ForegroundColor Green "Adding Scheduled Task..."
 
-        $scheduleaction = New-ScheduledTaskAction -Execute schtasks -Argument "/change /tn \Microsoft\Windows\UpdateOrchestrator\Reboot /DISABLE"  # disable reboot task in task-scheduler
-        $scheduleprincipal = New-ScheduledTaskPrincipal -UserID "NT AUTHORITY\SYSTEM" -LogonType ServiceAccount -RunLevel Highest                  # execute with highest system privilges
-        $scheduletsettings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Hours 1)
+		$scheduleaction = New-ScheduledTaskAction -Execute schtasks -Argument "/change /tn \Microsoft\Windows\UpdateOrchestrator\Reboot /DISABLE"  # disable reboot task in task-scheduler
+		$scheduleprincipal = New-ScheduledTaskPrincipal -UserID "NT AUTHORITY\SYSTEM" -LogonType ServiceAccount -RunLevel Highest                  # execute with highest system privilges
+		$scheduletsettings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Hours 1)
 
-        $scheduletrigger1 = New-ScheduledTaskTrigger -At 4:30AM -Daily
-        $scheduletrigger2 = New-ScheduledTaskTrigger -At 4:30AM -Once -RepetitionInterval (New-TimeSpan -Minutes 10) -RepetitionDuration (New-TimeSpan -Days 1)
-        $scheduletrigger1.Repetition = $scheduletrigger2.Repetition                                              # hacky workaround so that the trigger reads: "At 4:30 every day - After triggered, repeat every 10 minutes for a duration of 1 day"
+		$scheduletrigger1 = New-ScheduledTaskTrigger -At 4:30AM -Daily
+		$scheduletrigger2 = New-ScheduledTaskTrigger -At 4:30AM -Once -RepetitionInterval (New-TimeSpan -Minutes 10) -RepetitionDuration (New-TimeSpan -Days 1)
+		$scheduletrigger1.Repetition = $scheduletrigger2.Repetition                                              # hacky workaround so that the trigger reads: "At 4:30 every day - After triggered, repeat every 10 minutes for a duration of 1 day"
 
-        $scheduletask = New-ScheduledTask -Action $scheduleaction -Principal $scheduleprincipal -Trigger $scheduletrigger1 -Settings $scheduletsettings
-        $scheduledtask = Register-ScheduledTask -TaskName $scheduletaskname -InputObject $scheduletask -Force  # register task
-    } elseif ($scheduletask -eq "n") {
-        Write-Host -ForegroundColor Red "Not Adding Scheduled Task"
-    }
+		$scheduletask = New-ScheduledTask -Action $scheduleaction -Principal $scheduleprincipal -Trigger $scheduletrigger1 -Settings $scheduletsettings
+		$scheduledtask = Register-ScheduledTask -TaskName $scheduletaskname -InputObject $scheduletask -Force  # register task
+	} elseif ($scheduletask -eq "n") {
+		Write-Host -ForegroundColor Red "Not Adding Scheduled Task"
+	}
 }
 
 
 # restart the explorer task
 Write-Host ""
 Write-Host -ForegroundColor Cyan "Restarting Explorer Process, for changes to take effect..."
-Write-Host -ForegroundColor Gray "For a precise changelog, view the commented code"
 Stop-Process -processname explorer
 
+Write-Host ""
+Write-Host -ForegroundColor Gray "For a precise changelog, view the commented code"
 Write-Host ""
 Write-Host -ForegroundColor Cyan "Exiting..."
