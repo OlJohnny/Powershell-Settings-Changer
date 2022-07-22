@@ -22,7 +22,7 @@ function write_registry($key_path, $item_name, $item_value){
 		Write-Verbose 'Key already exists' -Verbose
 	} else {
 		# If not create new key
-		New-Item -Path $key_path -Force
+		New-Item -Path $key_path
 	}
 	# Set Key Property
 	New-ItemProperty -Path $key_path -PropertyType "DWord" -Name $item_name -Value $item_value
@@ -34,50 +34,46 @@ function write_registry($key_path, $item_name, $item_value){
 Write-Host ""
 Write-Host -ForegroundColor Cyan "Updating Basic Explorer Settings..."
 $key = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer'
-Set-ItemProperty $key ShowFrequent 0            # do not show frequently used files
-Set-ItemProperty $key ShowRecent 0              # do not show recently used files
+write_registry $key "ShowFrequent" 0            # do not show frequently used files
+write_registry $key "ShowRecent" 0              # do not show recently used files
 
 
 Write-Host ""
 Write-Host -ForegroundColor Cyan "Updating Advanced Explorer Settings..."
 $key = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
-Set-ItemProperty $key Hidden 1                  # show hidden files
-Set-ItemProperty $key HideFileExt 0             # show all file extensions
-Set-ItemProperty $key ShowSuperHidden 0         # do not show windows system files
-Set-ItemProperty $key LaunchTo 1                # launch to 'This PC'
-Set-ItemProperty $key HideDrivesWithNoMedia 0   # do not hide drives, which are not present
-Set-ItemProperty $key SeparateProcess 1         # start each explorer.exe in its own process
-Set-ItemProperty $key DontUsePowerShellOnWinX 0 # show powershell instead of cmd on win+x or right-click on windows logo
+write_registry $key "Hidden" 1                  # show hidden files
+write_registry $key "HideFileExt" 0             # show all file extensions
+write_registry $key "ShowSuperHidden" 0         # do not show windows system files
+write_registry $key "LaunchTo" 1                # launch to 'This PC'
+write_registry $key "HideDrivesWithNoMedia" 0   # do not hide drives, which are not present
+write_registry $key "SeparateProcess" 1         # start each explorer.exe in its own process
+write_registry $key "DontUsePowerShellOnWinX" 0 # show powershell instead of cmd on win+x or right-click on windows logo
 
 
 Write-Host ""
 Write-Host -ForegroundColor Cyan "Updating Advanced People Explorer Settings..."
-$key = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\People'
-Set-ItemProperty $key PeopleBand 0              # hide 'contacts' region at end of taskbar
+write_registry "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\People" PeopleBand 0              # hide 'contacts' region at end of taskbar
 
 
 Write-Host ""
 Write-Host -ForegroundColor Cyan "Updating Search Settings..."
 $key = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Search'
-Set-ItemProperty $key BingSearchEnabled 0       # disable bing search results
-Set-ItemProperty $key SearchboxTaskbarMode 0    # show the search symbol (not the bar) on taskbar
+write_registry $key "BingSearchEnabled" 0       # disable bing search results
+write_registry $key "SearchboxTaskbarMode" 0    # show the search symbol (not the bar) on taskbar
 
 
 Write-Host ""
 Write-Host -ForegroundColor Cyan "Applying Dark Mode..."
-$key = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize'
-Set-ItemProperty $key AppsUseLightTheme 0       # apply dark theme
+write_registry "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" "AppsUseLightTheme" 0       # apply dark theme
 
 
 Write-Host ""
 Write-Host -ForegroundColor Cyan "Disabling Cortana..."
 $key = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search'
-Set-ItemProperty $key AllowCortana 0            # disable cortana in 1803
-Set-ItemProperty $key CortanaConsent 0          # turn off consent for cortana
-$key = 'HKLM:\SOFTWARE\Microsoft\PolicyManager\current\device\Experience'
-Set-ItemProperty $key AllowCortana 0            # disable cortana in 1607
-$key = 'HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\Windows Search'
-Set-ItemProperty $key AllowCortana 0            # disable cortana
+write_registry $key "AllowCortana" 0            # disable cortana in 1803
+write_registry $key "CortanaConsent" 0          # turn off consent for cortana
+write_registry "HKLM:\SOFTWARE\Microsoft\PolicyManager\current\device\Experience" "AllowCortana" 0            # disable cortana in 1607
+write_registry "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\Windows Search" "AllowCortana" 0        # disable cortana
 
 
 Write-Host ""
@@ -112,12 +108,9 @@ $custom_key.CreateSubKey('RC4 56/128')
 $custom_key.CreateSubKey('RC4 128/128')
 $custom_key.Close()
 # set values for created keys
-$key = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Ciphers\RC4 128/128'
-Set-ItemProperty $key Enabled 0					# disable RC4 128bit
-$key = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Ciphers\RC4 56/128'
-Set-ItemProperty $key Enabled 0					# disable RC4 56bit
-$key = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Ciphers\RC4 40/128'
-Set-ItemProperty $key Enabled 0					# disable RC4 40bit
+write_registry "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Ciphers\RC4 128/128" Enabled 0				# disable RC4 128bit
+write_registry "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Ciphers\RC4 56/128" Enabled 0					# disable RC4 56bit
+write_registry "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Ciphers\RC4 40/128" Enabled 0					# disable RC4 40bit
 
 
 
