@@ -48,6 +48,7 @@ write_registry $key "LaunchTo" 1                # launch to 'This PC'
 write_registry $key "HideDrivesWithNoMedia" 0   # do not hide drives, which are not present
 write_registry $key "SeparateProcess" 1         # start each explorer.exe in its own process
 write_registry $key "DontUsePowerShellOnWinX" 0 # show powershell instead of cmd on win+x or right-click on windows logo
+write_registry 'HKLM:\System\CurrentControlSet\Control\FileSystem' 'LongPathsEnabled' 1 # enable long paths
 
 
 Write-Host ""
@@ -111,6 +112,72 @@ $custom_key.Close()
 write_registry "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Ciphers\RC4 128/128" Enabled 0				# disable RC4 128bit
 write_registry "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Ciphers\RC4 56/128" Enabled 0					# disable RC4 56bit
 write_registry "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Ciphers\RC4 40/128" Enabled 0					# disable RC4 40bit
+
+
+# winget install microsoft first party codecs
+$winget_first_party_codecs_install=""
+while ($winget_first_party_codecs_install -ne "y" -and $winget_first_party_codecs_install -ne "n") {
+	Write-Host -NoNewline -ForegroundColor Cyan "Do you want to want to install Microsoft First Party Programms? (y|n): "
+	$winget_first_party_codecs_install = Read-Host
+}
+if ($winget_first_party_codecs_install -eq "y") {
+	Write-Host -ForegroundColor Green "Installing Microsoft First Party Codecs..."
+	winget install 9N4WGH0Z6VHQ --source msstore --accept-package-agreements --accept-source-agreements		# install from microsoft-store: free HEVC codec (for device manufacturers)
+	winget install 9PMMSR1CGPWG --source msstore --accept-package-agreements --accept-source-agreements		# install from microsoft-store: free HEIC & HEIF codec (for device manufacturers)
+	winget install 9MVZQVXJBQ9V --source msstore --accept-package-agreements --accept-source-agreements		# install from microsoft-store: AV1 codec
+	winget install 9N95Q1ZZPMH4 --source msstore --accept-package-agreements --accept-source-agreements		# install from microsoft-store: MPEG-2 codec
+	winget install 9PG2DK419DRG --source msstore --accept-package-agreements --accept-source-agreements 	# install from microsoft-store: webp codec
+	winget install 9N4D0MSMP0PT --source msstore --accept-package-agreements --accept-source-agreements 	# install from microsoft-store: VP9 codec
+
+} elseif ($winget_first_party_codecs_install -eq "n") {
+	Write-Host -ForegroundColor Red "Not Installing Microsoft First Party Codecs"
+}
+
+
+# winget install microsoft first party programs
+$winget_first_party_programs_install=""
+while ($winget_first_party_programs_install -ne "y" -and $winget_first_party_programs_install -ne "n") {
+	Write-Host -NoNewline -ForegroundColor Cyan "Do you want to want to install Microsoft First Party Programs? (y|n): "
+	$winget_first_party_programs_install = Read-Host
+}
+if ($winget_first_party_programs_install -eq "y") {
+	Write-Host -ForegroundColor Green "Installing Microsoft First Party Programs..."
+	winget install 9N0DX20HK701 --source msstore --accept-package-agreements --accept-source-agreements		# install from microsoft-store: windows terminal
+	winget install Microsoft.PowerToys --accept-package-agreements --accept-source-agreements				# install from winget: microsoft powertoys
+	winget install Microsoft.VisualStudioCode --accept-package-agreements --accept-source-agreements		# install from winget: microsoft visual studio code, TODO: manual setup
+	winget install Microsoft.OpenSSH --accept-package-agreements --accept-source-agreements             	# install from winget: OpenSSH
+} elseif ($winget_first_party_programs_install -eq "n") {
+	Write-Host -ForegroundColor Red "Not Installing Microsoft First Party Programs"
+}
+
+
+# winget install third party programs
+winget install 9NBLGGH516XP --source msstore --accept-package-agreements --accept-source-agreements		# install from microsoft-store: eartrumpet
+# install chrome
+# install thunderbird
+# install notepad++
+# install keepass
+
+
+
+# Windows 11 Tweaks
+$win11_tweaks=""
+while ($win11_tweaks -ne "y" -and $win11_tweaks -ne "n") {
+	Write-Host -NoNewline -ForegroundColor Cyan "Do you want to want to use Registry Tweaks for Windows 11? (y|n): "
+	$win11_tweaks = Read-Host
+}
+if ($win11_tweaks -eq "y") {
+	Write-Host -ForegroundColor Green "Applying Registry Tweaks for Windows 11..."
+    HKEY_CURRENT_USER\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32     # old context menu: double click on "Default"?
+    HKEY_CURRENT_USER\SOFTWARE\Policies\Microsoft\Windows\Explorer DisableSearchBoxSuggestions 1       # no bing in search
+    HKEY_CURRENT_USER\Software\Microsoft\ Windows\CurrentVersion\Explorer\Advanced TaskbarAl 0         # move taskbar icons to left
+    # dont show contacts
+    # dont show "jetzt besprechen"
+
+} elseif ($win11_tweaks -eq "n") {
+	Write-Host -ForegroundColor Red "Not Applying Registry Tweaks for Windows 11"
+}
+
 
 
 
