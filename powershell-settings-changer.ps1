@@ -1,7 +1,7 @@
 #Requires -RunAsAdministrator
 Set-StrictMode -Version Latest
 
-# github.com/OlJohnny | 2020
+# github.com/OlJohnny | 2022
 
 
 Write-Host -ForegroundColor Cyan "Welcome to Powershell-Settings-Changer."
@@ -12,7 +12,6 @@ Write-Host ""
 reg export HKCU "reg_HKCU - $(Get-Date -Format yyyy.MM.dd-HH.mm.ss).reg"
 reg export "HKLM:\SYSTEM\CurrentcontrolSet\Control\SecurityProviders\SCHANNEL" "reg_HKLM-SCHANNEL - $(Get-Date -Format yyyy.MM.dd-HH.mm.ss).reg"
 reg export "HKLM:\SOFTWARE" "reg_HKLM-SOFTWARE - $(Get-Date -Format yyyy.MM.dd-HH.mm.ss).reg"
-
 
 
 # write a path to the registry and create parent-path, if not present
@@ -29,17 +28,12 @@ function write_registry($key_path, $item_name, $item_value){
 }
 
 
-
 # change registry entries
 Write-Host ""
 Write-Host -ForegroundColor Cyan "Updating Basic Explorer Settings..."
 $key = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer'
 write_registry $key "ShowFrequent" 0            # do not show frequently used files
 write_registry $key "ShowRecent" 0              # do not show recently used files
-
-
-Write-Host ""
-Write-Host -ForegroundColor Cyan "Updating Advanced Explorer Settings..."
 $key = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
 write_registry $key "Hidden" 1                  # show hidden files
 write_registry $key "HideFileExt" 0             # show all file extensions
@@ -48,33 +42,30 @@ write_registry $key "LaunchTo" 1                # launch to 'This PC'
 write_registry $key "HideDrivesWithNoMedia" 0   # do not hide drives, which are not present
 write_registry $key "SeparateProcess" 1         # start each explorer.exe in its own process
 write_registry $key "DontUsePowerShellOnWinX" 0 # show powershell instead of cmd on win+x or right-click on windows logo
-write_registry 'HKLM:\System\CurrentControlSet\Control\FileSystem' 'LongPathsEnabled' 1 # enable long paths
+write_registry 'HKLM:\System\CurrentControlSet\Control\FileSystem' 'LongPathsEnabled' 1     				# enable long paths
 
 
 Write-Host ""
-Write-Host -ForegroundColor Cyan "Updating Advanced People Explorer Settings..."
-write_registry "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\People" PeopleBand 0              # hide 'contacts' region at end of taskbar
+Write-Host -ForegroundColor Cyan "Updating Taskbar Settings..."
+write_registry 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\People' 'PeopleBand' 0	# dont show "poeple bar" on taskbar
+write_registry 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer' 'HideSCAMeetNow' 1		# dont show "meet now" on taskbar
 
 
 Write-Host ""
-Write-Host -ForegroundColor Cyan "Updating Search Settings..."
+Write-Host -ForegroundColor Cyan "Updating Search and Cortana Settings..."
 $key = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Search'
 write_registry $key "BingSearchEnabled" 0       # disable bing search results
 write_registry $key "SearchboxTaskbarMode" 0    # show the search symbol (not the bar) on taskbar
-
-
-Write-Host ""
-Write-Host -ForegroundColor Cyan "Applying Dark Mode..."
-write_registry "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" "AppsUseLightTheme" 0       # apply dark theme
-
-
-Write-Host ""
-Write-Host -ForegroundColor Cyan "Disabling Cortana..."
 $key = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search'
 write_registry $key "AllowCortana" 0            # disable cortana in 1803
 write_registry $key "CortanaConsent" 0          # turn off consent for cortana
 write_registry "HKLM:\SOFTWARE\Microsoft\PolicyManager\current\device\Experience" "AllowCortana" 0            # disable cortana in 1607
 write_registry "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\Windows Search" "AllowCortana" 0        # disable cortana
+
+
+Write-Host ""
+Write-Host -ForegroundColor Cyan "Applying Dark Mode..."
+write_registry "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" "AppsUseLightTheme" 0       # apply dark theme
 
 
 Write-Host ""
@@ -109,9 +100,9 @@ $custom_key.CreateSubKey('RC4 56/128')
 $custom_key.CreateSubKey('RC4 128/128')
 $custom_key.Close()
 # set values for created keys
-write_registry "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Ciphers\RC4 128/128" Enabled 0				# disable RC4 128bit
-write_registry "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Ciphers\RC4 56/128" Enabled 0					# disable RC4 56bit
-write_registry "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Ciphers\RC4 40/128" Enabled 0					# disable RC4 40bit
+write_registry "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Ciphers\RC4 128/128" "Enabled" 0				# disable RC4 128bit
+write_registry "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Ciphers\RC4 56/128" "Enabled" 0					# disable RC4 56bit
+write_registry "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Ciphers\RC4 40/128" "Enabled" 0					# disable RC4 40bit
 
 
 # winget install microsoft first party codecs
@@ -159,7 +150,6 @@ winget install 9NBLGGH516XP --source msstore --accept-package-agreements --accep
 # install keepass
 
 
-
 # Windows 11 Tweaks
 $win11_tweaks=""
 while ($win11_tweaks -ne "y" -and $win11_tweaks -ne "n") {
@@ -168,17 +158,12 @@ while ($win11_tweaks -ne "y" -and $win11_tweaks -ne "n") {
 }
 if ($win11_tweaks -eq "y") {
 	Write-Host -ForegroundColor Green "Applying Registry Tweaks for Windows 11..."
-    HKEY_CURRENT_USER\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32     # old context menu: double click on "Default"?
-    HKEY_CURRENT_USER\SOFTWARE\Policies\Microsoft\Windows\Explorer DisableSearchBoxSuggestions 1       # no bing in search
-    HKEY_CURRENT_USER\Software\Microsoft\ Windows\CurrentVersion\Explorer\Advanced TaskbarAl 0         # move taskbar icons to left
-    # dont show contacts
-    # dont show "jetzt besprechen"
-
+    #TODO: write_registry 'HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32'     # old context menu: double click on "Default"?
+    write_registry 'HKCU:\SOFTWARE\Policies\Microsoft\Windows\Explorer' 'DisableSearchBoxSuggestions' 1       # no bing in search
+    write_registry 'HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' 'TaskbarAl' 0         # move taskbar icons to left
 } elseif ($win11_tweaks -eq "n") {
 	Write-Host -ForegroundColor Red "Not Applying Registry Tweaks for Windows 11"
 }
-
-
 
 
 # add scheduled task to periodically disable self reboots
