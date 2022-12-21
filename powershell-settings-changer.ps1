@@ -4,11 +4,12 @@ Set-StrictMode -Version Latest
 # github.com/OlJohnny | 2022
 
 
-Write-Host -ForegroundColor Cyan "Welcome to Powershell-Settings-Changer."
+Write-Host -ForegroundColor Cyan "Welcome to Powershell-Settings-Changer"
 Write-Host ""
 
 
 # backup to-be-modified registry parts
+Write-Host -ForegroundColor Gray "Backup to be modified registry parts"
 reg export HKCU "reg_HKCU - $(Get-Date -Format yyyy.MM.dd-HH.mm.ss).reg"
 reg export "HKLM:\SYSTEM\CurrentcontrolSet\Control\SecurityProviders\SCHANNEL" "reg_HKLM-SCHANNEL - $(Get-Date -Format yyyy.MM.dd-HH.mm.ss).reg"
 reg export "HKLM:\SOFTWARE" "reg_HKLM-SOFTWARE - $(Get-Date -Format yyyy.MM.dd-HH.mm.ss).reg"
@@ -43,6 +44,10 @@ write_registry $key "HideDrivesWithNoMedia" 0   # do not hide drives, which are 
 write_registry $key "SeparateProcess" 1         # start each explorer.exe in its own process
 write_registry $key "DontUsePowerShellOnWinX" 0 # show powershell instead of cmd on win+x or right-click on windows logo
 write_registry 'HKLM:\System\CurrentControlSet\Control\FileSystem' 'LongPathsEnabled' 1     				# enable long paths
+$key = 'HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\System'
+write_registry $key 'AllowClipboardHistory' 0	# disable clipboard history
+write_registry $key 'EnableActivityFeed' 0		# disable activity feed
+write_registry $key 'AllowCrossDeviceClipboard' 0	# disable cloud syncing of clipbaord
 
 
 Write-Host ""
@@ -137,17 +142,40 @@ if ($winget_first_party_programs_install -eq "y") {
 	winget install Microsoft.PowerToys --accept-package-agreements --accept-source-agreements				# install from winget: microsoft powertoys
 	winget install Microsoft.VisualStudioCode --accept-package-agreements --accept-source-agreements		# install from winget: microsoft visual studio code, TODO: manual setup
 	winget install Microsoft.OpenSSH --accept-package-agreements --accept-source-agreements             	# install from winget: OpenSSH
+	Get-Service -Name ssh-agent | Set-Service -StartupType Automatic										# automatically start ssh agent on bootup
+	Start-Service ssh-agent
 } elseif ($winget_first_party_programs_install -eq "n") {
 	Write-Host -ForegroundColor Red "Not Installing Microsoft First Party Programs"
 }
 
 
-# winget install third party programs
-winget install 9NBLGGH516XP --source msstore --accept-package-agreements --accept-source-agreements		# install from microsoft-store: eartrumpet
-# install chrome
-# install thunderbird
-# install notepad++
-# install keepass
+# winget install microsoft first party programs
+$winget_third_party_programs_install=""
+while ($winget_third_party_programs_install -ne "y" -and $winget_third_party_programs_install -ne "n") {
+	Write-Host -NoNewline -ForegroundColor Cyan "Do you want to want to install some Third Party Programs (EarTrumpet)? (y|n): "
+	$winget_third_party_programs_install = Read-Host
+}
+if ($winget_third_party_programs_install -eq "y") {
+	Write-Host -ForegroundColor Green "Installing Third Party Programs..."
+	winget install 9NBLGGH516XP --source msstore --accept-package-agreements --accept-source-agreements		# install from microsoft-store: eartrumpet
+} elseif ($winget_third_party_programs_install -eq "n") {
+	Write-Host -ForegroundColor Red "Not Installing Third Party Programs"
+}
+
+
+# enable wsl
+$wsl_install=""
+while ($wsl_install -ne "y" -and $wsl_install -ne "n") {
+	Write-Host -NoNewline -ForegroundColor Cyan "Do you want to want to install Windows Subsystem for Linux (WSL)? (y|n): "
+	$wsl_install = Read-Host
+}
+if ($wsl_install -eq "y") {
+	Write-Host -ForegroundColor Green "Installing WSL..."
+	dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart	# for wsl2 enable virtualization features
+	wsl --install
+} elseif ($wsl_install -eq "n") {
+	Write-Host -ForegroundColor Red "Not Installing WSL"
+}
 
 
 # Windows 11 Tweaks
@@ -200,7 +228,7 @@ if ($scheduledtaskexists) {
 
 # restart the explorer task
 Write-Host ""
-Write-Host -ForegroundColor Cyan "Restarting Explorer Process, for changes to take effect..."
+Write-Host -ForegroundColor Cyan "Restarting Explorer Process for changes to take effect..."
 Stop-Process -processname explorer
 
 Write-Host ""
