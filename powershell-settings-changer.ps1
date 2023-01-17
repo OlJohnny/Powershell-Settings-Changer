@@ -141,9 +141,6 @@ if ($winget_first_party_programs_install -eq "y") {
 	winget install 9N0DX20HK701 --source msstore --accept-package-agreements --accept-source-agreements		# install from microsoft-store: windows terminal
 	winget install Microsoft.PowerToys --accept-package-agreements --accept-source-agreements				# install from winget: microsoft powertoys
 	winget install Microsoft.VisualStudioCode --accept-package-agreements --accept-source-agreements		# install from winget: microsoft visual studio code, TODO: manual setup
-	winget install Microsoft.OpenSSH --accept-package-agreements --accept-source-agreements             	# install from winget: OpenSSH
-	Get-Service -Name ssh-agent | Set-Service -StartupType Automatic										# automatically start ssh agent on bootup
-	Start-Service ssh-agent
 } elseif ($winget_first_party_programs_install -eq "n") {
 	Write-Host -ForegroundColor Red "Not Installing Microsoft First Party Programs"
 }
@@ -192,6 +189,22 @@ if ($win11_tweaks -eq "y") {
 } elseif ($win11_tweaks -eq "n") {
 	Write-Host -ForegroundColor Red "Not Applying Registry Tweaks for Windows 11"
 }
+
+# ssh stuff
+$openssh_setup=""
+while ($openssh_setup -ne "y" -and $openssh_setup -ne "n") {
+	Write-Host -NoNewline -ForegroundColor Cyan "Do you want to want to install OpenSSH and setup ssh-agent? (y|n): "
+	$openssh_setup = Read-Host
+}
+if ($openssh_setup -eq "y") {
+	Write-Host -ForegroundColor Green "Applying Registry Tweaks for Windows 11..."
+	winget install Microsoft.OpenSSH --accept-package-agreements --accept-source-agreements             	# install from winget: OpenSSH
+	Set-Service -Name 'ssh-agent' -StartupType Automatic													# automatically start ssh-agent on bootup
+	Start-Service ssh-agent																					# start ssh-agent now
+	# todo: download xml and paste into temp folder
+	Register-ScheduledTask -XML 'clear_ssh-agent_identities_on_lock.xml' -TaskPath '/github/oljohnny'
+}
+
 
 
 # add scheduled task to periodically disable self reboots
