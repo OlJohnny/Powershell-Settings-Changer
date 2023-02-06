@@ -139,6 +139,7 @@ while ($winget_first_party_programs_install -ne "y" -and $winget_first_party_pro
 if ($winget_first_party_programs_install -eq "y") {
 	Write-Host -ForegroundColor Green "Installing Microsoft First Party Programs..."
 	winget install 9N0DX20HK701 --source msstore --accept-package-agreements --accept-source-agreements		# install from microsoft-store: windows terminal
+	winget install 9MZ1SNWT0N5D --source msstore --accept-package-agreements --accept-source-agreements		# install from microsoft-store: PowerShell 7
 	winget install Microsoft.PowerToys --accept-package-agreements --accept-source-agreements				# install from winget: microsoft powertoys
 	winget install Microsoft.VisualStudioCode --accept-package-agreements --accept-source-agreements		# install from winget: microsoft visual studio code, TODO: manual setup
 	winget install Microsoft.OpenSSH --accept-package-agreements --accept-source-agreements             	# install from winget: OpenSSH
