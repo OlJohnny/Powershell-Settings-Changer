@@ -71,6 +71,10 @@ write_registry "HKLM:\SOFTWARE\WOW6432Node\Policies\Microsoft\Windows\Windows Se
 Write-Host ""
 Write-Host -ForegroundColor Cyan "Applying Dark Mode..."
 write_registry "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" "AppsUseLightTheme" 0       # apply dark theme
+$key = 'HKEY_CURRENT_USER\Keyboard Layout\Toggle'								# disable hotkeys for changing keyboard layout (all except win + space)
+write_registry $key 'Layout Hotkey' 3
+write_registry $key 'Language Hotkey' 3
+write_registry $key 'Hotkey' 3
 
 
 Write-Host ""
