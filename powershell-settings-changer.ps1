@@ -1,7 +1,7 @@
 #Requires -RunAsAdministrator
 Set-StrictMode -Version Latest
 
-# github.com/OlJohnny | 2022
+# github.com/OlJohnny | 2024
 
 
 Write-Host -ForegroundColor Cyan 'Welcome to Powershell-Settings-Changer'
@@ -9,7 +9,7 @@ Write-Host ''
 
 
 # backup to-be-modified registry parts
-Write-Host -ForegroundColor Gray 'Backup to be modified registry parts'
+Write-Host -ForegroundColor Gray 'Backup to be modified registry parts into current folder'
 reg export HKCU "reg_HKCU - $(Get-Date -Format yyyy.MM.dd-HH.mm.ss).reg"
 reg export 'HKLM:\SYSTEM\CurrentcontrolSet\Control\SecurityProviders\SCHANNEL' "reg_HKLM-SCHANNEL - $(Get-Date -Format yyyy.MM.dd-HH.mm.ss).reg"
 reg export 'HKLM:\SOFTWARE' "reg_HKLM-SOFTWARE - $(Get-Date -Format yyyy.MM.dd-HH.mm.ss).reg"
@@ -48,7 +48,7 @@ $key = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\System'
 write_registry $key 'AllowClipboardHistory' 0		# disable clipboard history
 write_registry $key 'EnableActivityFeed' 0			# disable activity feed
 write_registry $key 'AllowCrossDeviceClipboard' 0	# disable cloud syncing of clipbaord
-
+write_registry 'HKCU:\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\Bags\AllFolders\Shell' 'FolderType' 'NotSpecified'	# reset folder view settings, fixes long indexing times; https://x.com/timonsku/status/1764306103720989115?s=20
 
 Write-Host ''
 Write-Host -ForegroundColor Cyan 'Updating Taskbar Settings...'
@@ -57,11 +57,9 @@ write_registry 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explore
 write_registry 'HKCU:\SOFTWARE\Policies\Microsoft\Windows\Explorer' 'DisableSearchBoxSuggestions' 1         # no bing in search
 write_registry 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' 'TaskbarAl' 0            # move taskbar icons to left
 
-
 Write-Host ''
 Write-Host -ForegroundColor Cyan 'Applying Dark Mode...'
 write_registry 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize' 'AppsUseLightTheme' 0   # apply dark theme
-
 
 Write-Host ''
 Write-Host -ForegroundColor Cyan 'Disabling Accessibility Features...'
@@ -77,7 +75,6 @@ write_registry $key 'Layout Hotkey' 3
 write_registry $key 'Language Hotkey' 3
 write_registry $key 'Hotkey' 3
 
-
 Write-Host ''
 Write-Host -ForegroundColor Cyan 'Disabling SSLv2, SSLv3, TLSv1.0, TLSv1.1 and enabling TLSv1.2 server-side...'
 write_registry 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\SSL 2.0\Server' 'DisabledByDefault' 1	# disable SSLv2   Server Side
@@ -88,7 +85,6 @@ write_registry 'HKLM:\SYSTEM\CurrentcontrolSet\Control\SecurityProviders\SCHANNE
 write_registry 'HKLM:\SYSTEM\CurrentcontrolSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.1\Server' 'Enabled' 0				# disable TLSv1.1 Server Side - part 2
 write_registry 'HKLM:\SYSTEM\CurrentcontrolSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server' 'DisabledByDefault' 0	# enable  TLSv1.2 Server Side - part 1
 write_registry 'HKLM:\SYSTEM\CurrentcontrolSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2\Server' 'Enabled' 1				# enable  TLSv1.2 Server Side - part 2
-
 
 Write-Host ''
 Write-Host -ForegroundColor Cyan 'Disabling RC4 ciphers...'
